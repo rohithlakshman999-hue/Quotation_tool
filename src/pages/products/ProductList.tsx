@@ -21,6 +21,7 @@ import {
 import { Label } from '../../components/ui/label';
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import Select from 'react-select';
 
 export const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -235,35 +236,23 @@ export const ProductList: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="unit_id">Unit of Measurement</Label>
-                  <select
-                    id="unit_id"
-                    name="unit_id"
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.unit_id}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Select UOM...</option>
-                    {units.map(u => (
-                      <option key={u.id} value={u.id}>{u.unit_name} ({u.symbol})</option>
-                    ))}
-                  </select>
+                  <Select
+                    options={units.map(u => ({ value: u.id, label: `${u.unit_name} (${u.symbol})` }))}
+                    value={formData.unit_id ? { value: formData.unit_id, label: `${units.find(u => u.id === formData.unit_id)?.unit_name} (${units.find(u => u.id === formData.unit_id)?.symbol})` } : null}
+                    onChange={(option) => setFormData({ ...formData, unit_id: option?.value || '' })}
+                    placeholder="Search UOM..."
+                    className="text-sm"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="gst_id">GST Rate</Label>
-                  <select
-                    id="gst_id"
-                    name="gst_id"
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={formData.gst_id}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Select GST...</option>
-                    {gstRates.map(g => (
-                      <option key={g.id} value={g.id}>{g.gst_percentage}%</option>
-                    ))}
-                  </select>
+                  <Select
+                    options={gstRates.map(g => ({ value: g.id, label: `${g.gst_percentage}%` }))}
+                    value={formData.gst_id ? { value: formData.gst_id, label: `${gstRates.find(g => g.id === formData.gst_id)?.gst_percentage}%` } : null}
+                    onChange={(option) => setFormData({ ...formData, gst_id: option?.value || '' })}
+                    placeholder="Search GST..."
+                    className="text-sm"
+                  />
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-4">

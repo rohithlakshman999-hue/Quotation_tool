@@ -560,16 +560,13 @@ export const QuotationForm: React.FC = () => {
                     ₹{item.total_amount.toFixed(2)}
                   </TableCell>
                   <TableCell className="align-middle py-3">
-                    <select
-                      className="flex h-8 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={item.gst_id}
-                      onChange={e => updateItem(item.id, 'gst_id', e.target.value)}
-                    >
-                      <option value="">No GST</option>
-                      {gstRates.map(g => (
-                        <option key={g.id} value={g.id}>{g.gst_percentage}%</option>
-                      ))}
-                    </select>
+                    <Select
+                      options={gstRates.map(g => ({ value: g.id, label: `${g.gst_percentage}%` }))}
+                      value={item.gst_id ? { value: item.gst_id, label: `${gstRates.find(g => g.id === item.gst_id)?.gst_percentage}%` } : null}
+                      onChange={(option) => updateItem(item.id, 'gst_id', option?.value || '')}
+                      placeholder="GST"
+                      className="text-xs"
+                    />
                     <div className="text-xs text-slate-500 mt-1">
                       ₹{item.tax.toFixed(2)}
                     </div>
