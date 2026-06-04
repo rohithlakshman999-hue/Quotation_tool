@@ -48,7 +48,7 @@ export default function Products() {
   const [formData, setFormData] = useState<Partial<Product>>(defaultForm)
 
   const fetchProducts = () => {
-    fetch("http://localhost:3000/api/products")
+    fetch("http://localhost:3005/api/products")
       .then(res => res.json())
       .then(data => setProducts(data))
   }
@@ -58,7 +58,7 @@ export default function Products() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const method = editingId ? "PUT" : "POST"
-    const url = editingId ? `http://localhost:3000/api/products/${editingId}` : "http://localhost:3000/api/products"
+    const url = editingId ? `http://localhost:3005/api/products/${editingId}` : "http://localhost:3005/api/products"
     
     await fetch(url, {
       method,
@@ -79,7 +79,7 @@ export default function Products() {
 
   const handleDelete = async (id: number) => {
     if(confirm("Are you sure you want to delete this product?")) {
-      await fetch(`http://localhost:3000/api/products/${id}`, { method: "DELETE" })
+      await fetch(`http://localhost:3005/api/products/${id}`, { method: "DELETE" })
       fetchProducts()
     }
   }

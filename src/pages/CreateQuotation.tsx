@@ -47,7 +47,7 @@ export default function CreateQuotation() {
 
   useEffect(() => {
     if (isEditing) {
-      fetch(`http://localhost:3000/api/quotations/${id}`)
+      fetch(`http://localhost:3005/api/quotations/${id}`)
         .then(res => res.json())
         .then(data => {
           setQuoteNo(data.quote_no)
@@ -115,7 +115,7 @@ export default function CreateQuotation() {
     }
 
     const method = isEditing ? "PUT" : "POST"
-    const url = isEditing ? `http://localhost:3000/api/quotations/${id}` : "http://localhost:3000/api/quotations"
+    const url = isEditing ? `http://localhost:3005/api/quotations/${id}` : "http://localhost:3005/api/quotations"
 
     try {
       const res = await fetch(url, {

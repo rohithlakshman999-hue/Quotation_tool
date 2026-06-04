@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from '../../components/ui/dialog';
 import { Label } from '../../components/ui/label';
 import { Plus, Edit2, Trash2, Search, MapPin, Briefcase } from 'lucide-react';
@@ -203,6 +204,9 @@ export const ClientList: React.FC = () => {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>{editingClient ? 'Edit Client' : 'Add New Client'}</DialogTitle>
+              <DialogDescription className="hidden">
+                {editingClient ? 'Form to edit an existing client' : 'Form to add a new client'}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSave} className="space-y-4 pt-4">
               <div className="grid grid-cols-2 gap-4">

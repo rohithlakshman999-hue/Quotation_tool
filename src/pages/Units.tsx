@@ -26,7 +26,7 @@ export default function Units() {
   const [formData, setFormData] = useState<Partial<UoM>>(defaultForm)
 
   const fetchUnits = () => {
-    fetch("http://localhost:3000/api/uom")
+    fetch("http://localhost:3005/api/uom")
       .then(res => res.json())
       .then(data => setUnits(data))
   }
@@ -36,7 +36,7 @@ export default function Units() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const method = editingId ? "PUT" : "POST"
-    const url = editingId ? `http://localhost:3000/api/uom/${editingId}` : "http://localhost:3000/api/uom"
+    const url = editingId ? `http://localhost:3005/api/uom/${editingId}` : "http://localhost:3005/api/uom"
     
     await fetch(url, {
       method,
@@ -57,7 +57,7 @@ export default function Units() {
 
   const handleDelete = async (id: number) => {
     if(confirm("Are you sure you want to delete this unit?")) {
-      await fetch(`http://localhost:3000/api/uom/${id}`, { method: "DELETE" })
+      await fetch(`http://localhost:3005/api/uom/${id}`, { method: "DELETE" })
       fetchUnits()
     }
   }

@@ -22,7 +22,7 @@ export default function GstSlabs() {
   const [formData, setFormData] = useState<Partial<GstSlab>>(defaultForm)
 
   const fetchSlabs = () => {
-    fetch("http://localhost:3000/api/gst")
+    fetch("http://localhost:3005/api/gst")
       .then(res => res.json())
       .then(data => setSlabs(data))
   }
@@ -32,7 +32,7 @@ export default function GstSlabs() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const method = editingId ? "PUT" : "POST"
-    const url = editingId ? `http://localhost:3000/api/gst/${editingId}` : "http://localhost:3000/api/gst"
+    const url = editingId ? `http://localhost:3005/api/gst/${editingId}` : "http://localhost:3005/api/gst"
     
     await fetch(url, {
       method,
@@ -53,7 +53,7 @@ export default function GstSlabs() {
 
   const handleDelete = async (id: number) => {
     if(confirm("Are you sure you want to delete this GST slab?")) {
-      await fetch(`http://localhost:3000/api/gst/${id}`, { method: "DELETE" })
+      await fetch(`http://localhost:3005/api/gst/${id}`, { method: "DELETE" })
       fetchSlabs()
     }
   }

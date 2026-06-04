@@ -21,7 +21,7 @@ export default function Quotations() {
   const [loading, setLoading] = useState(true)
 
   const fetchQuotes = () => {
-    fetch("http://localhost:3000/api/quotations")
+    fetch("http://localhost:3005/api/quotations")
       .then(res => res.json())
       .then(data => {
         setQuotations(data)
@@ -37,14 +37,14 @@ export default function Quotations() {
 
   const handleDelete = async (id: number) => {
     if(confirm("Are you sure you want to delete this quotation?")) {
-      await fetch(`http://localhost:3000/api/quotations/${id}`, { method: "DELETE" })
+      await fetch(`http://localhost:3005/api/quotations/${id}`, { method: "DELETE" })
       fetchQuotes()
     }
   }
 
   const handleView = async (quote: Quotation) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/quotations/${quote.id}`)
+      const res = await fetch(`http://localhost:3005/api/quotations/${quote.id}`)
       const fullQuote = await res.json()
       // format data for PDF
       const pdfData = {

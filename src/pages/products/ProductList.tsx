@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from '../../components/ui/dialog';
 import { Label } from '../../components/ui/label';
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
@@ -223,6 +224,7 @@ export const ProductList: React.FC = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+              <DialogDescription className="hidden">Product form</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSave} className="space-y-4 pt-4">
               <div className="space-y-2">

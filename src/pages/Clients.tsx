@@ -28,7 +28,7 @@ export default function Clients() {
   const [formData, setFormData] = useState<Partial<Client>>(defaultForm)
 
   const fetchClients = () => {
-    fetch("http://localhost:3000/api/clients")
+    fetch("http://localhost:3005/api/clients")
       .then(res => res.json())
       .then(data => setClients(data))
   }
@@ -38,7 +38,7 @@ export default function Clients() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const method = editingId ? "PUT" : "POST"
-    const url = editingId ? `http://localhost:3000/api/clients/${editingId}` : "http://localhost:3000/api/clients"
+    const url = editingId ? `http://localhost:3005/api/clients/${editingId}` : "http://localhost:3005/api/clients"
     
     await fetch(url, {
       method,
@@ -59,7 +59,7 @@ export default function Clients() {
 
   const handleDelete = async (id: number) => {
     if(confirm("Are you sure you want to delete this client?")) {
-      await fetch(`http://localhost:3000/api/clients/${id}`, { method: "DELETE" })
+      await fetch(`http://localhost:3005/api/clients/${id}`, { method: "DELETE" })
       fetchClients()
     }
   }
