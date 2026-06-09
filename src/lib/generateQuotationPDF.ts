@@ -171,17 +171,31 @@ export function generateQuotationPDF(data: any, action: 'save' | 'view' = 'save'
   
   doc.setFont("helvetica", "normal")
   doc.setFontSize(9)
-  const terms = [
-    "1. Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore",
-    "2. Taxes : Prices are Inclusive of all Taxes",
-    "3. Warranty : As per the manufacturers Warranty",
-    "4. Payment : 50% Advance along with PO and 50% Against Delivery",
-    "5. Delivery : Back to Back",
-    "6. Validity : 3 Days"
-  ]
+  let termsArray: string[] = [];
+  if (data.terms && typeof data.terms === 'object' && !Array.isArray(data.terms)) {
+    if (data.terms.order_payment) termsArray.push(`1. Order / Payment : ${data.terms.order_payment}`);
+    if (data.terms.taxes) termsArray.push(`2. Taxes : ${data.terms.taxes}`);
+    if (data.terms.warranty) termsArray.push(`3. Warranty : ${data.terms.warranty}`);
+    if (data.terms.payment_for_supply) termsArray.push(`4. Payment : ${data.terms.payment_for_supply}`);
+    if (data.terms.delivery) termsArray.push(`5. Delivery : ${data.terms.delivery}`);
+    if (data.terms.validity) termsArray.push(`6. Validity : ${data.terms.validity}`);
+  } else if (data.terms && typeof data.terms === 'string' && data.terms.trim() !== '') {
+    termsArray = data.terms.split('\n').filter((t: string) => t.trim() !== '');
+  } else if (Array.isArray(data.terms) && data.terms.length > 0) {
+    termsArray = data.terms;
+  } else {
+    termsArray = [
+      "1. Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore",
+      "2. Taxes : Prices are Inclusive of all Taxes",
+      "3. Warranty : As per the manufacturers Warranty",
+      "4. Payment : 50% Advance along with PO and 50% Against Delivery",
+      "5. Delivery : Back to Back",
+      "6. Validity : 3 Days"
+    ];
+  }
   
   let currentY = finalY + 20
-  terms.forEach(term => {
+  termsArray.forEach((term: string) => {
     // Word wrap the terms
     const splitText = doc.splitTextToSize(term, 100)
     doc.text(splitText, 14, currentY)

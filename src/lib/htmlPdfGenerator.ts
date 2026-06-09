@@ -62,15 +62,31 @@ export const generateHTMLQuotationPDF = async (data: PDFQuotationData, action: '
     `;
   }).join('');
 
-  // Generate terms list
-  const termsList = `
-    <li class="">Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore.&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; For <span class="font-bold">Hertz & Bytes Technologies</span></li>
-    <li class="">Taxes : As per applicable GST.</li>
-    <li class="">Warranty : 1 Year OEM Warranty.</li>
-    <li class="">Payment : 100% advance along with purchase order.</li>
-    <li class="">Delivery : Within 2-3 weeks from the date of receipt of PO & Payment.&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Authorized Signatory</li>
-    <li class="">Validity : 30 Days from the date of quotation.</li>
-  `;
+  let termsList = '';
+  if (data.terms && typeof data.terms === 'object' && !Array.isArray(data.terms)) {
+    const lines = [];
+    if (data.terms.order_payment) lines.push(`Order / Payment : ${data.terms.order_payment}`);
+    if (data.terms.taxes) lines.push(`Taxes : ${data.terms.taxes}`);
+    if (data.terms.warranty) lines.push(`Warranty : ${data.terms.warranty}`);
+    if (data.terms.payment_for_supply) lines.push(`Payment : ${data.terms.payment_for_supply}`);
+    if (data.terms.delivery) lines.push(`Delivery : ${data.terms.delivery}`);
+    if (data.terms.validity) lines.push(`Validity : ${data.terms.validity}`);
+    termsList = lines.map(line => `<li class="">${line}</li>`).join('');
+  } else if (data.terms && typeof data.terms === 'string' && data.terms.trim() !== '') {
+    const lines = data.terms.split('\n').filter(t => t.trim() !== '');
+    termsList = lines.map(line => `<li class="">${line}</li>`).join('');
+  } else if (Array.isArray(data.terms) && data.terms.length > 0) {
+    termsList = data.terms.map((line: string) => `<li class="">${line}</li>`).join('');
+  } else {
+    termsList = `
+      <li class="">Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore.</li>
+      <li class="">Taxes : As per applicable GST.</li>
+      <li class="">Warranty : 1 Year OEM Warranty.</li>
+      <li class="">Payment : 100% advance along with purchase order.</li>
+      <li class="">Delivery : Within 2-3 weeks from the date of receipt of PO & Payment.</li>
+      <li class="">Validity : 30 Days from the date of quotation.</li>
+    `;
+  }
 
   // Total in words
   let totalWords = numberToWords(roundedNet);
@@ -223,11 +239,17 @@ ${itemsRows}
 </div>
 </section>
 
-<div class="bg-gray-50/50 p-4 rounded-lg border border-gray-100 mt-6">
+<div class="bg-gray-50/50 p-4 rounded-lg border border-gray-100 mt-6 relative">
 <h4 class="text-blue-700 font-bold border-b border-blue-100 pb-2 mb-2">Terms and Conditions</h4>
-<ol class="text-xs text-gray-600 space-y-2 list-decimal ml-4 leading-relaxed w-full">
-${termsList}
-</ol>
+<div class="flex justify-between items-end">
+  <ol class="text-xs text-gray-600 space-y-2 list-decimal ml-4 leading-relaxed w-[65%]">
+  ${termsList}
+  </ol>
+  <div class="w-[30%] text-right text-xs">
+    <div style="color: rgb(145, 39, 35);" class="font-bold mb-8">For Hertz & Bytes Technologies</div>
+    <div class="text-gray-500 mt-8">Authorized Signatory</div>
+  </div>
+</div>
 </div>
 
 <footer class="mt-auto pt-8 pb-4">

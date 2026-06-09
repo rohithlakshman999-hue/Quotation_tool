@@ -333,16 +333,30 @@ export const generateQuotationPDF = (data: PDFQuotationData, action: 'save' | 'p
   doc.setFontSize(8);
   doc.setTextColor(cGray600[0], cGray600[1], cGray600[2]);
   
-  const defaultTerms = [
-    `1. Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore.`,
-    `2. Taxes : As per applicable GST.`,
-    `3. Warranty : 1 Year OEM Warranty.`,
-    `4. Payment : 100% advance along with purchase order.`,
-    `5. Delivery : Within 2-3 weeks from the date of receipt of PO & Payment.`,
-    `6. Validity : 30 Days from the date of quotation.`
-  ];
+  let termsArray: string[] = [];
+  if (data.terms && typeof data.terms === 'object' && !Array.isArray(data.terms)) {
+    if (data.terms.order_payment) termsArray.push(`1. Order / Payment : ${data.terms.order_payment}`);
+    if (data.terms.taxes) termsArray.push(`2. Taxes : ${data.terms.taxes}`);
+    if (data.terms.warranty) termsArray.push(`3. Warranty : ${data.terms.warranty}`);
+    if (data.terms.payment_for_supply) termsArray.push(`4. Payment : ${data.terms.payment_for_supply}`);
+    if (data.terms.delivery) termsArray.push(`5. Delivery : ${data.terms.delivery}`);
+    if (data.terms.validity) termsArray.push(`6. Validity : ${data.terms.validity}`);
+  } else if (data.terms && typeof data.terms === 'string' && data.terms.trim() !== '') {
+    termsArray = data.terms.split('\n').filter(t => t.trim() !== '');
+  } else if (Array.isArray(data.terms) && data.terms.length > 0) {
+    termsArray = data.terms;
+  } else {
+    termsArray = [
+      `1. Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore.`,
+      `2. Taxes : As per applicable GST.`,
+      `3. Warranty : 1 Year OEM Warranty.`,
+      `4. Payment : 100% advance along with purchase order.`,
+      `5. Delivery : Within 2-3 weeks from the date of receipt of PO & Payment.`,
+      `6. Validity : 30 Days from the date of quotation.`
+    ];
+  }
 
-  defaultTerms.forEach(term => {
+  termsArray.forEach(term => {
      doc.text(term, margin + 5, termsY);
      termsY += 4.2;
   });

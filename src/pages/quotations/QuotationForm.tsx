@@ -166,12 +166,50 @@ export const QuotationForm: React.FC = () => {
           } catch { /* ignore */ }
         }
       } else {
-        setQuoteNumber(`QT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+        let nextQuoteNum = "HNBT/2526/001";
+        try {
+          if (isSupabaseConfigured) {
+            const { data: lastQuote } = await supabase
+              .from('quotations')
+              .select('quote_number')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
+            
+            if (lastQuote && lastQuote.quote_number) {
+              const match = lastQuote.quote_number.match(/(HNBT\/\d{4}\/)(\d+)/);
+              if (match && match[1] && match[2]) {
+                const nextNum = parseInt(match[2], 10) + 1;
+                nextQuoteNum = `${match[1]}${nextNum.toString().padStart(3, '0')}`;
+              }
+            }
+          } else {
+            const savedQuotations = localStorage.getItem('demo_quotations');
+            if (savedQuotations) {
+              const quotations = JSON.parse(savedQuotations);
+              if (quotations.length > 0) {
+                // Find the first one that matches the pattern (assuming array is prepended/sorted newest first)
+                const lastQuote = quotations.find((q: any) => q.quote_number?.match(/HNBT\/\d{4}\/\d+/));
+                if (lastQuote) {
+                  const match = lastQuote.quote_number.match(/(HNBT\/\d{4}\/)(\d+)/);
+                  if (match && match[1] && match[2]) {
+                    const nextNum = parseInt(match[2], 10) + 1;
+                    nextQuoteNum = `${match[1]}${nextNum.toString().padStart(3, '0')}`;
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Error generating next quote number", e);
+        }
+
+        setQuoteNumber(nextQuoteNum);
         setItems([createEmptyItem()]);
       }
     } catch (error: any) {
       toast.error('Error fetching data', { description: error.message });
-      setQuoteNumber(`QT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+      setQuoteNumber('HNBT/2526/001');
       setItems([createEmptyItem()]);
     } finally {
       setFetching(false);
