@@ -279,6 +279,7 @@ export const QuotationForm: React.FC = () => {
       const p = products.find(prod => prod.id === item.product_id);
       return {
         productName: p?.product_name || item.description || 'Item',
+        description: item.description,
         hsn: p?.hsn || '',
         quantity: item.quantity,
         uom: p?.unit?.symbol || '',
@@ -550,9 +551,9 @@ export const QuotationForm: React.FC = () => {
                 <TableHead className="w-[25%]">Inventory Item</TableHead>
                 <TableHead className="w-[18%]">Description</TableHead>
                 <TableHead className="w-[10%]">Qty</TableHead>
-                <TableHead className="w-[12%]">Rate (₹)</TableHead>
-                <TableHead className="w-[12%]">Item Total</TableHead>
-                <TableHead className="w-[12%]">GST</TableHead>
+                <TableHead className="w-[12%] text-right">Rate (₹)</TableHead>
+                <TableHead className="w-[12%] text-right">Item Total</TableHead>
+                <TableHead className="w-[12%] text-center">GST</TableHead>
                 <TableHead className="w-[11%] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -594,10 +595,10 @@ export const QuotationForm: React.FC = () => {
                       onChange={e => updateItem(item.id, 'unit_rate', parseFloat(e.target.value) || 0)}
                     />
                   </TableCell>
-                  <TableCell className="align-middle py-3 font-medium text-slate-700">
+                  <TableCell className="align-middle py-3 text-right font-medium text-slate-700">
                     ₹{item.total_amount.toFixed(2)}
                   </TableCell>
-                  <TableCell className="align-middle py-3">
+                  <TableCell className="align-middle py-3 text-center">
                     <Select
                       options={gstRates.map(g => ({ value: g.id, label: `${g.gst_percentage}%` }))}
                       value={item.gst_id ? { value: item.gst_id, label: `${gstRates.find(g => g.id === item.gst_id)?.gst_percentage}%` } : null}

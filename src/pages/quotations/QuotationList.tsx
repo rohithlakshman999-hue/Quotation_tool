@@ -116,6 +116,7 @@ export const QuotationList: React.FC = () => {
         const taxPercent = item.tax_percent !== undefined ? item.tax_percent : productGst;
         return {
           productName: p?.product_name || item.description || 'Item',
+          description: item.description,
           hsn: p?.hsn || '',
           quantity: item.quantity,
           uom: p?.unit?.symbol || '',

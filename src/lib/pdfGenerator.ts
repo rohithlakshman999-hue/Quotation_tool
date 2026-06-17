@@ -155,7 +155,15 @@ export const generateQuotationPDF = (data: PDFQuotationData, action: 'save' | 'p
   currentY += midCardH + 6;
 
   // 3. Table
-  const tableColumn = ["#", "ITEM DESCRIPTION", "HSN/SAC", "QTY.", "RATE", "TAX", "AMOUNT"];
+  const tableColumn = [
+    { content: "#", styles: { halign: 'center' as const } },
+    { content: "ITEM DESCRIPTION", styles: { halign: 'left' as const } },
+    { content: "HSN/SAC", styles: { halign: 'center' as const } },
+    { content: "QTY.", styles: { halign: 'center' as const } },
+    { content: "RATE", styles: { halign: 'right' as const } },
+    { content: "TAX", styles: { halign: 'center' as const } },
+    { content: "AMOUNT", styles: { halign: 'right' as const } }
+  ];
   const tableRows: any[] = [];
   
   let totalQty = 0;
@@ -169,12 +177,12 @@ export const generateQuotationPDF = (data: PDFQuotationData, action: 'save' | 'p
 
     let desc = `${item.productName}`;
     if (item.description) {
-      desc += ` - ${item.description}`; // single line with dash separator
+      desc += `\n${item.description}`; // newline separator
     }
     
     let taxString = '';
     if (item.taxPercent > 0) {
-      taxString = isKarnataka ? `GST@ ${item.taxPercent}%` : `IGST@ ${item.taxPercent}%`;
+      taxString = `${item.taxPercent}%`;
     }
 
     tableRows.push([
@@ -221,7 +229,7 @@ export const generateQuotationPDF = (data: PDFQuotationData, action: 'save' | 'p
       1: { cellWidth: 61, halign: 'left' },
       2: { cellWidth: 20, halign: 'center' },
       3: { cellWidth: 14, halign: 'center' },
-      4: { cellWidth: 28, halign: 'center' },
+      4: { cellWidth: 28, halign: 'right' },
       5: { cellWidth: 22, halign: 'center' },
       6: { cellWidth: 'auto', halign: 'right' }
     }

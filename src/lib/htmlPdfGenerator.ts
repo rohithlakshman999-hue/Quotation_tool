@@ -47,12 +47,15 @@ export const generateHTMLQuotationPDF = async (data: PDFQuotationData, action: '
   const itemsRows = data.items.map((item, index) => {
     let taxString = '';
     if (item.taxPercent > 0) {
-      taxString = isKarnataka(data.client.state) ? `GST@ ${item.taxPercent}%` : `IGST@ ${item.taxPercent}%`;
+      taxString = `${item.taxPercent}%`;
     }
 
     return `
       <tr class="hover:bg-gray-50 transition-colors">
-        <td class="px-4 font-medium py-2 font-bold">${index + 1}. ${item.productName}</td>
+        <td class="px-4 py-2">
+          <div class="font-bold">${index + 1}. ${item.productName}</div>
+          ${item.description ? `<div class="text-[10px] text-gray-600 mt-0.5 ml-3 font-normal leading-tight">${item.description}</div>` : ''}
+        </td>
         <td class="px-4 py-2 text-center font-bold">${item.hsn}</td>
         <td class="px-4 text-center py-2 font-bold">${item.quantity}</td>
         <td class="px-4 text-right py-2 font-bold">Rs. ${formatAmount(item.rate)}</td>
@@ -194,9 +197,9 @@ export const generateHTMLQuotationPDF = async (data: PDFQuotationData, action: '
 <th class="px-4 font-semibold rounded-tl-lg py-2 text-left">#&nbsp; Item description</th>
 <th class="px-4 font-semibold py-2 text-left">HSN/SAC</th>
 <th class="px-4 font-semibold text-center py-2">Qty.</th>
-<th class="px-4 font-semibold py-2 text-center">Rate</th>
+<th class="px-4 font-semibold py-2 text-right">Rate</th>
 <th class="px-4 font-semibold py-2 text-center">Tax</th>
-<th class="px-4 font-semibold rounded-tr-lg py-2 text-center">Amount</th>
+<th class="px-4 font-semibold rounded-tr-lg py-2 text-right">Amount</th>
 </tr>
 </thead>
 <tbody class="text-sm divide-y divide-gray-100">
