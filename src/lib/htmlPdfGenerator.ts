@@ -82,12 +82,12 @@ export const generateHTMLQuotationPDF = async (data: PDFQuotationData, action: '
     termsList = data.terms.map((line: string) => `<li class="">${line}</li>`).join('');
   } else {
     termsList = `
-      <li class="">Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore.</li>
-      <li class="">Taxes : As per applicable GST.</li>
-      <li class="">Warranty : 1 Year OEM Warranty.</li>
-      <li class="">Payment : 100% advance along with purchase order.</li>
-      <li class="">Delivery : Within 2-3 weeks from the date of receipt of PO & Payment.</li>
-      <li class="">Validity : 30 Days from the date of quotation.</li>
+      <li class="">Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore</li>
+      <li class="">Taxes : Prices are Inclusive of all Taxes</li>
+      <li class="">Warranty : As per the manufacturers Warranty</li>
+      <li class="">Payment : Within 30 Days From the Date of Invoice</li>
+      <li class="">Delivery : Back to Back</li>
+      <li class="">Validity : 3 Days</li>
     `;
   }
 

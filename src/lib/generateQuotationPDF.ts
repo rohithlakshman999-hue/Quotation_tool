@@ -188,7 +188,7 @@ export function generateQuotationPDF(data: any, action: 'save' | 'view' = 'save'
       "1. Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore",
       "2. Taxes : Prices are Inclusive of all Taxes",
       "3. Warranty : As per the manufacturers Warranty",
-      "4. Payment : 50% Advance along with PO and 50% Against Delivery",
+      "4. Payment : Within 30 Days From the Date of Invoice",
       "5. Delivery : Back to Back",
       "6. Validity : 3 Days"
     ];

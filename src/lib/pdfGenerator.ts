@@ -206,7 +206,7 @@ export const generateQuotationPDF = (data: PDFQuotationData, action: 'save' | 'p
       fontSize: 9, 
       font: "helvetica", 
       cellPadding: 1.5, 
-      overflow: 'hidden'
+      overflow: 'linebreak'
     },
     headStyles: { 
       fillColor: cBlue700,
@@ -355,12 +355,12 @@ export const generateQuotationPDF = (data: PDFQuotationData, action: 'save' | 'p
     termsArray = data.terms;
   } else {
     termsArray = [
-      `1. Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore.`,
-      `2. Taxes : As per applicable GST.`,
-      `3. Warranty : 1 Year OEM Warranty.`,
-      `4. Payment : 100% advance along with purchase order.`,
-      `5. Delivery : Within 2-3 weeks from the date of receipt of PO & Payment.`,
-      `6. Validity : 30 Days from the date of quotation.`
+      `1. Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore`,
+      `2. Taxes : Prices are Inclusive of all Taxes`,
+      `3. Warranty : As per the manufacturers Warranty`,
+      `4. Payment : Within 30 Days From the Date of Invoice`,
+      `5. Delivery : Back to Back`,
+      `6. Validity : 3 Days`
     ];
   }
 

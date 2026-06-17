@@ -32,12 +32,12 @@ interface LineItem {
 }
 
 const defaultTerms = {
-  order_payment: "In favour of Hertz & Bytes Technologies, Bangalore.",
-  taxes: "As per applicable GST.",
-  payment_for_supply: "100% advance along with purchase order.",
-  delivery: "Within 2-3 weeks from the date of receipt of PO & Payment.",
-  warranty: "1 Year OEM Warranty.",
-  validity: "30 Days from the date of quotation."
+  order_payment: "In favour of Hertz & Bytes Technologies, Bangalore",
+  taxes: "Prices are Inclusive of all Taxes",
+  payment_for_supply: "Within 30 Days From the Date of Invoice",
+  delivery: "Back to Back",
+  warranty: "As per the manufacturers Warranty",
+  validity: "3 Days"
 };
 
 const createEmptyItem = (): LineItem => ({

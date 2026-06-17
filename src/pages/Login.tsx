@@ -11,7 +11,7 @@ export function Login() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'admin';
+    const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'Hnbtech@2017';
     if (password === adminPassword) {
       localStorage.setItem('isAuthenticated', 'true');
       toast.success('Logged in successfully');

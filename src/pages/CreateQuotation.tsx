@@ -43,7 +43,12 @@ export default function CreateQuotation() {
 
   // Footer details
   const [narration, setNarration] = useState("")
-  const [terms, setTerms] = useState("")
+  const [terms, setTerms] = useState(`1. Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore
+2. Taxes : Prices are Inclusive of all Taxes
+3. Warranty : As per the manufacturers Warranty
+4. Payment : Within 30 Days From the Date of Invoice
+5. Delivery : Back to Back
+6. Validity : 3 Days`)
 
   useEffect(() => {
     if (isEditing) {
@@ -56,7 +61,12 @@ export default function CreateQuotation() {
           setClientCity(data.client_city)
           setClientState(data.client_state)
           setNarration(data.narration || "")
-          setTerms(data.terms_conditions || "")
+          setTerms(data.terms_conditions || `1. Order / Payment : In favour of Hertz & Bytes Technologies, Bangalore
+2. Taxes : Prices are Inclusive of all Taxes
+3. Warranty : As per the manufacturers Warranty
+4. Payment : Within 30 Days From the Date of Invoice
+5. Delivery : Back to Back
+6. Validity : 3 Days`)
           if (data.items) {
             setItems(data.items.map((item: any) => ({
               ...item,
@@ -205,7 +215,7 @@ export default function CreateQuotation() {
               {items.map((item) => (
                 <TableRow key={item.id} className="border-b-0 hover:bg-transparent">
                   <TableCell className="py-1 px-2 border-r border-gray-300 bg-blue-600 text-white w-[200px]">
-                    <Input className="h-6 bg-transparent border-none text-white p-0 rounded-none shadow-none focus-visible:ring-0" value={item.description.split('\\n')[0]} onChange={e => updateItem(item.id, "description", e.target.value)} />
+                    <textarea className="w-full min-h-[24px] bg-transparent border-none text-white p-1 rounded-none shadow-none focus-visible:ring-0 resize-y text-xs" value={item.description} onChange={e => updateItem(item.id, "description", e.target.value)} rows={1} style={{ overflow: 'hidden' }} onInput={(e) => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'; }} />
                   </TableCell>
                   <TableCell className="py-1 px-2 border-r border-gray-300 w-[80px]">
                     <Input type="number" className="h-6 text-right border-none p-0 rounded-none shadow-none focus-visible:ring-0" value={item.qty} onChange={e => updateItem(item.id, "qty", parseFloat(e.target.value) || 0)} />
@@ -230,7 +240,7 @@ export default function CreateQuotation() {
                     {item.value.toFixed(2)}
                   </TableCell>
                   <TableCell className="py-1 px-2">
-                     <Input className="h-6 border-none p-0 rounded-none shadow-none focus-visible:ring-0" value={item.description} onChange={e => updateItem(item.id, "description", e.target.value)} />
+                     <textarea className="w-full min-h-[24px] border-none p-1 rounded-none shadow-none focus-visible:ring-0 resize-y text-xs bg-transparent" value={item.description} onChange={e => updateItem(item.id, "description", e.target.value)} rows={1} style={{ overflow: 'hidden' }} onInput={(e) => { e.currentTarget.style.height = 'auto'; e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px'; }} />
                   </TableCell>
                   <TableCell className="py-1 px-1">
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeItem(item.id)}>
