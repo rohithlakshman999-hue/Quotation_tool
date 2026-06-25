@@ -310,6 +310,17 @@ export const QuotationForm: React.FC = () => {
       return;
     }
 
+    let pdfWindow: Window | null = null;
+    if (generatePdf) {
+      // Open the window immediately to bypass popup blockers
+      pdfWindow = window.open('', '_blank');
+      if (pdfWindow) {
+        pdfWindow.document.write('<html><body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f8fafc;"><h2>Generating your PDF...</h2></body></html>');
+      } else {
+        toast.warning('Please allow popups for this site to view the PDF');
+      }
+    }
+
     try {
       setLoading(true);
 
@@ -349,7 +360,13 @@ export const QuotationForm: React.FC = () => {
           const pdfData = buildPdfData();
           if (pdfData) {
             const url = await generateHTMLQuotationPDF(pdfData, 'preview');
-            if (url) window.open(url.toString(), '_blank');
+            if (url && pdfWindow) {
+              pdfWindow.location.href = url.toString();
+            } else if (pdfWindow) {
+              pdfWindow.close();
+            }
+          } else if (pdfWindow) {
+            pdfWindow.close();
           }
         }
 
@@ -419,12 +436,19 @@ export const QuotationForm: React.FC = () => {
         const pdfData = buildPdfData();
         if (pdfData) {
           const url = await generateHTMLQuotationPDF(pdfData, 'preview');
-          if (url) window.open(url.toString(), '_blank');
+          if (url && pdfWindow) {
+            pdfWindow.location.href = url.toString();
+          } else if (pdfWindow) {
+            pdfWindow.close();
+          }
+        } else if (pdfWindow) {
+          pdfWindow.close();
         }
       }
 
       navigate('/quotations');
     } catch (error: any) {
+      if (pdfWindow) pdfWindow.close();
       toast.error('Error saving quotation', { description: error.message });
     } finally {
       setLoading(false);
@@ -446,19 +470,19 @@ export const QuotationForm: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-20">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
             {id ? 'Edit Quotation' : 'Create New Quotation'}
           </h2>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => navigate('/quotations')}>Cancel</Button>
-          <Button variant="outline" className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => handleSave(true)} disabled={loading}>
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto h-12 md:h-10" onClick={() => navigate('/quotations')}>Cancel</Button>
+          <Button variant="outline" className="w-full sm:w-auto h-12 md:h-10 bg-white border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => handleSave(true)} disabled={loading}>
             <Printer className="w-4 h-4 mr-2" />
             Save & View PDF
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => handleSave(false)} disabled={loading}>
+          <Button className="w-full sm:w-auto h-12 md:h-10 bg-blue-600 hover:bg-blue-700" onClick={() => handleSave(false)} disabled={loading}>
             <Save className="w-4 h-4 mr-2" />
             Save Quotation
           </Button>
@@ -485,11 +509,11 @@ export const QuotationForm: React.FC = () => {
           <CardContent className="space-y-4 pt-4">
             <div className="space-y-2">
               <Label htmlFor="quoteNumber">Quote Number</Label>
-              <Input id="quoteNumber" value={quoteNumber} onChange={e => setQuoteNumber(e.target.value)} required />
+              <Input id="quoteNumber" className="h-12 md:h-10" value={quoteNumber} onChange={e => setQuoteNumber(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="quoteDate">Quote Date</Label>
-              <Input id="quoteDate" type="date" value={quoteDate} onChange={e => setQuoteDate(e.target.value)} required />
+              <Input id="quoteDate" type="date" className="h-12 md:h-10" value={quoteDate} onChange={e => setQuoteDate(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="clientId">Client</Label>
@@ -499,6 +523,15 @@ export const QuotationForm: React.FC = () => {
                 onChange={(option) => setClientId(option?.value || '')}
                 placeholder="Search Client..."
                 className="text-sm"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    minHeight: '48px',
+                    '@media (min-width: 768px)': {
+                      minHeight: '40px',
+                    }
+                  })
+                }}
               />
             </div>
           </CardContent>
@@ -508,30 +541,30 @@ export const QuotationForm: React.FC = () => {
           <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
             <CardTitle className="text-lg">Terms & Conditions</CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 grid grid-cols-2 gap-4">
+          <CardContent className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
              <div className="space-y-1">
                <Label className="text-xs text-slate-500">Order / Payment</Label>
-               <Input value={terms.order_payment} onChange={e => handleTermChange('order_payment', e.target.value)} className="h-8 text-sm" />
+               <Input value={terms.order_payment} onChange={e => handleTermChange('order_payment', e.target.value)} className="h-12 md:h-10 text-sm" />
              </div>
              <div className="space-y-1">
                <Label className="text-xs text-slate-500">Taxes</Label>
-               <Input value={terms.taxes} onChange={e => handleTermChange('taxes', e.target.value)} className="h-8 text-sm" />
+               <Input value={terms.taxes} onChange={e => handleTermChange('taxes', e.target.value)} className="h-12 md:h-10 text-sm" />
              </div>
              <div className="space-y-1">
                <Label className="text-xs text-slate-500">Payment for Supply</Label>
-               <Input value={terms.payment_for_supply} onChange={e => handleTermChange('payment_for_supply', e.target.value)} className="h-8 text-sm" />
+               <Input value={terms.payment_for_supply} onChange={e => handleTermChange('payment_for_supply', e.target.value)} className="h-12 md:h-10 text-sm" />
              </div>
              <div className="space-y-1">
                <Label className="text-xs text-slate-500">Delivery</Label>
-               <Input value={terms.delivery} onChange={e => handleTermChange('delivery', e.target.value)} className="h-8 text-sm" />
+               <Input value={terms.delivery} onChange={e => handleTermChange('delivery', e.target.value)} className="h-12 md:h-10 text-sm" />
              </div>
              <div className="space-y-1">
                <Label className="text-xs text-slate-500">Warranty</Label>
-               <Input value={terms.warranty} onChange={e => handleTermChange('warranty', e.target.value)} className="h-8 text-sm" />
+               <Input value={terms.warranty} onChange={e => handleTermChange('warranty', e.target.value)} className="h-12 md:h-10 text-sm" />
              </div>
              <div className="space-y-1">
                <Label className="text-xs text-slate-500">Validity</Label>
-               <Input value={terms.validity} onChange={e => handleTermChange('validity', e.target.value)} className="h-8 text-sm" />
+               <Input value={terms.validity} onChange={e => handleTermChange('validity', e.target.value)} className="h-12 md:h-10 text-sm" />
              </div>
           </CardContent>
         </Card>
@@ -545,83 +578,167 @@ export const QuotationForm: React.FC = () => {
           </Button>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
-          <Table className="w-full min-w-max">
-            <TableHeader className="bg-slate-50/50">
-              <TableRow>
-                <TableHead className="w-[25%]">Inventory Item</TableHead>
-                <TableHead className="w-[18%]">Description</TableHead>
-                <TableHead className="w-[10%]">Qty</TableHead>
-                <TableHead className="w-[12%] text-right">Rate (₹)</TableHead>
-                <TableHead className="w-[12%] text-right">Item Total</TableHead>
-                <TableHead className="w-[12%] text-center">GST</TableHead>
-                <TableHead className="w-[11%] text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="align-middle py-3">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table className="w-full min-w-max">
+              <TableHeader className="bg-slate-50/50">
+                <TableRow>
+                  <TableHead className="w-[25%]">Inventory Item</TableHead>
+                  <TableHead className="w-[18%]">Description</TableHead>
+                  <TableHead className="w-[10%]">Qty</TableHead>
+                  <TableHead className="w-[12%] text-right">Rate (₹)</TableHead>
+                  <TableHead className="w-[12%] text-right">Item Total</TableHead>
+                  <TableHead className="w-[12%] text-center">GST</TableHead>
+                  <TableHead className="w-[11%] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="align-middle py-3">
+                      <Select
+                        options={productOptions}
+                        value={productOptions.find(opt => opt.value === item.product_id) || null}
+                        onChange={(option) => updateItem(item.id, 'product_id', option?.value || '')}
+                        placeholder="Search Product..."
+                        className="text-sm"
+                      />
+                    </TableCell>
+                    <TableCell className="align-middle py-3">
+                      <Input 
+                        placeholder="Optional" 
+                        className="h-8 text-xs" 
+                        value={item.description}
+                        onChange={e => updateItem(item.id, 'description', e.target.value)}
+                      />
+                    </TableCell>
+                    <TableCell className="align-middle py-3">
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        className="h-8" 
+                        value={item.quantity || ''}
+                        onChange={e => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                      />
+                    </TableCell>
+                    <TableCell className="align-middle py-3">
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        className="h-8" 
+                        value={item.unit_rate || ''}
+                        onChange={e => updateItem(item.id, 'unit_rate', parseFloat(e.target.value) || 0)}
+                      />
+                    </TableCell>
+                    <TableCell className="align-middle py-3 text-right font-medium text-slate-700">
+                      ₹{item.total_amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="align-middle py-3 text-center">
+                      <Select
+                        options={gstRates.map(g => ({ value: g.id, label: `${g.gst_percentage}%` }))}
+                        value={item.gst_id ? { value: item.gst_id, label: `${gstRates.find(g => g.id === item.gst_id)?.gst_percentage}%` } : null}
+                        onChange={(option) => updateItem(item.id, 'gst_id', option?.value || '')}
+                        placeholder="GST"
+                        className="text-xs"
+                      />
+                      <div className="text-xs text-slate-500 mt-1">
+                        ₹{item.tax.toFixed(2)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="align-middle py-3 text-right">
+                      <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length === 1}>
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Cards View */}
+          <div className="md:hidden p-4 space-y-4">
+            {items.map((item, index) => (
+              <div key={item.id} className="border border-slate-200 rounded-xl p-4 space-y-4 shadow-sm bg-white">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="font-bold text-slate-700">Item {index + 1}</span>
+                  <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length === 1} className="text-red-500 hover:bg-red-50 h-10 w-10">
+                    <Trash2 className="w-5 h-5" />
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Product</Label>
                     <Select
                       options={productOptions}
                       value={productOptions.find(opt => opt.value === item.product_id) || null}
                       onChange={(option) => updateItem(item.id, 'product_id', option?.value || '')}
                       placeholder="Search Product..."
                       className="text-sm"
+                      styles={{ control: (base) => ({ ...base, minHeight: '48px' }) }}
                     />
-                  </TableCell>
-                  <TableCell className="align-middle py-3">
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Description</Label>
                     <Input 
-                      placeholder="Optional" 
-                      className="h-8 text-xs" 
+                      placeholder="Optional description" 
+                      className="h-12 text-base" 
                       value={item.description}
                       onChange={e => updateItem(item.id, 'description', e.target.value)}
                     />
-                  </TableCell>
-                  <TableCell className="align-middle py-3">
-                    <Input 
-                      type="number" 
-                      min="1" 
-                      className="h-8" 
-                      value={item.quantity || ''}
-                      onChange={e => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                    />
-                  </TableCell>
-                  <TableCell className="align-middle py-3">
-                    <Input 
-                      type="number" 
-                      min="0" 
-                      className="h-8" 
-                      value={item.unit_rate || ''}
-                      onChange={e => updateItem(item.id, 'unit_rate', parseFloat(e.target.value) || 0)}
-                    />
-                  </TableCell>
-                  <TableCell className="align-middle py-3 text-right font-medium text-slate-700">
-                    ₹{item.total_amount.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="align-middle py-3 text-center">
-                    <Select
-                      options={gstRates.map(g => ({ value: g.id, label: `${g.gst_percentage}%` }))}
-                      value={item.gst_id ? { value: item.gst_id, label: `${gstRates.find(g => g.id === item.gst_id)?.gst_percentage}%` } : null}
-                      onChange={(option) => updateItem(item.id, 'gst_id', option?.value || '')}
-                      placeholder="GST"
-                      className="text-xs"
-                    />
-                    <div className="text-xs text-slate-500 mt-1">
-                      ₹{item.tax.toFixed(2)}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">Qty</Label>
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        className="h-12 text-base" 
+                        value={item.quantity || ''}
+                        onChange={e => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                      />
                     </div>
-                  </TableCell>
-                  <TableCell className="align-middle py-3 text-right">
-                    <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length === 1}>
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">Rate (₹)</Label>
+                      <Input 
+                        type="number" 
+                        min="0" 
+                        className="h-12 text-base" 
+                        value={item.unit_rate || ''}
+                        onChange={e => updateItem(item.id, 'unit_rate', parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 items-end">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-slate-500">GST</Label>
+                      <Select
+                        options={gstRates.map(g => ({ value: g.id, label: `${g.gst_percentage}%` }))}
+                        value={item.gst_id ? { value: item.gst_id, label: `${gstRates.find(g => g.id === item.gst_id)?.gst_percentage}%` } : null}
+                        onChange={(option) => updateItem(item.id, 'gst_id', option?.value || '')}
+                        placeholder="GST"
+                        className="text-sm"
+                        styles={{ control: (base) => ({ ...base, minHeight: '48px' }) }}
+                      />
+                    </div>
+                    <div className="space-y-1 text-right">
+                      <Label className="text-xs text-slate-500 block mb-1">Item Total</Label>
+                      <span className="font-bold text-lg text-slate-800">₹{item.total_amount.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-500 text-right mt-1">
+                    Tax Amount: ₹{item.tax.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <Button type="button" variant="outline" className="w-full h-12 border-dashed border-2 border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50" onClick={addItem}>
+              <Plus className="w-4 h-4 mr-2" /> Add Another Item
+            </Button>
+          </div>
           
-          <div className="bg-slate-50 p-6 flex justify-end border-t border-slate-200 rounded-b-xl">
-            <div className="w-72 space-y-3 text-sm">
+          <div className="bg-slate-50 p-4 md:p-6 flex justify-end border-t border-slate-200 rounded-b-xl">
+            <div className="w-full md:w-72 space-y-3 text-sm">
               <div className="flex justify-between text-slate-600">
                 <span>Sub Total:</span>
                 <span className="font-medium">₹{totalItemAmount.toFixed(2)}</span>

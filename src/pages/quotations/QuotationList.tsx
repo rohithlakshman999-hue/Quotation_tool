@@ -80,6 +80,16 @@ export const QuotationList: React.FC = () => {
   };
 
   const handleDownload = async (quote: any, action: 'save' | 'preview' = 'save') => {
+    let pdfWindow: Window | null = null;
+    if (action === 'preview') {
+      pdfWindow = window.open('', '_blank');
+      if (pdfWindow) {
+        pdfWindow.document.write('<html><body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f8fafc;"><h2>Generating your PDF...</h2></body></html>');
+      } else {
+        toast.warning('Please allow popups for this site to view the PDF');
+      }
+    }
+
     try {
       let items = [];
       let products: Product[] = [];
@@ -137,13 +147,18 @@ export const QuotationList: React.FC = () => {
       };
 
       if (action === 'preview') {
-        const url = generateQuotationPDF(pdfData, 'preview');
-        if (url) window.open(url.toString(), '_blank');
+        const url = await generateQuotationPDF(pdfData, 'preview');
+        if (url && pdfWindow) {
+          pdfWindow.location.href = url.toString();
+        } else if (pdfWindow) {
+          pdfWindow.close();
+        }
       } else {
-        generateQuotationPDF(pdfData, 'save');
+        await generateQuotationPDF(pdfData, 'save');
         toast.success('PDF generated successfully');
       }
     } catch (error: any) {
+      if (pdfWindow) pdfWindow.close();
       toast.error('Failed to generate PDF', { description: error.message });
     }
   };
@@ -155,31 +170,32 @@ export const QuotationList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Quotations</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Quotations</h2>
           <p className="text-slate-500">Manage and generate professional quotations.</p>
         </div>
         
-        <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => navigate('/quotations/new')}>
+        <Button className="w-full sm:w-auto h-12 sm:h-10 bg-blue-600 hover:bg-blue-700" onClick={() => navigate('/quotations/new')}>
           <Plus className="w-4 h-4 mr-2" />
           Create Quotation
         </Button>
       </div>
 
-      <div className="flex items-center gap-2 max-w-sm">
+      <div className="flex items-center gap-2 max-w-sm w-full">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-3 top-3 h-5 w-5 sm:left-2.5 sm:top-2.5 sm:h-4 sm:w-4 text-slate-500" />
           <Input 
             placeholder="Search by quote number or client..." 
-            className="pl-9 bg-white" 
+            className="pl-10 sm:pl-9 bg-white h-12 sm:h-10" 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-md border border-slate-200 shadow-sm">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-md border border-slate-200 shadow-sm overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -236,6 +252,53 @@ export const QuotationList: React.FC = () => {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Cards View */}
+      <div className="md:hidden space-y-4">
+        {loading ? (
+          <div className="text-center py-10 text-slate-500">Loading...</div>
+        ) : filteredQuotations.length === 0 ? (
+          <div className="text-center py-10 text-slate-500 bg-white rounded-xl border border-slate-200">
+            <div className="flex flex-col items-center justify-center">
+              <FileText className="h-10 w-10 text-slate-300 mb-2" />
+              <p>No quotations found. Create your first quotation!</p>
+            </div>
+          </div>
+        ) : (
+          filteredQuotations.map((quote) => (
+            <div key={quote.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                <Link to={`/quotations/${quote.id}/edit`} className="font-bold text-blue-600 hover:underline">
+                  {quote.quote_number}
+                </Link>
+                <span className="text-sm text-slate-500">{format(new Date(quote.quote_date), 'dd MMM, yyyy')}</span>
+              </div>
+              <div className="space-y-1">
+                <div className="text-sm text-slate-500">Client</div>
+                <div className="font-medium text-slate-900">{quote.client?.client_name || 'Unknown Client'}</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-sm text-slate-500">Net Amount</div>
+                <div className="font-bold text-lg text-slate-800">₹{quote.net_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <Button variant="ghost" size="icon" onClick={() => handleDownload(quote, 'preview')} title="Preview PDF" className="h-10 w-10 bg-blue-50 text-blue-600 hover:bg-blue-100">
+                  <Eye className="w-5 h-5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDownload(quote, 'save')} title="Download PDF" className="h-10 w-10 bg-emerald-50 text-emerald-600 hover:bg-emerald-100">
+                  <FileText className="w-5 h-5" />
+                </Button>
+                <Button variant="ghost" size="icon" title="Edit" onClick={() => navigate(`/quotations/${quote.id}/edit`)} className="h-10 w-10 bg-slate-50 text-slate-600 hover:bg-slate-100">
+                  <Edit2 className="w-5 h-5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(quote.id)} title="Delete" className="h-10 w-10 bg-red-50 text-red-600 hover:bg-red-100">
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

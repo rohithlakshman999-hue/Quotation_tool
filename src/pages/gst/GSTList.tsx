@@ -172,9 +172,9 @@ export const GSTList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">GST Master</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">GST Master</h2>
           <p className="text-slate-500">Manage Tax Configurations and GST Rates.</p>
         </div>
         
@@ -183,7 +183,7 @@ export const GSTList: React.FC = () => {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="w-full sm:w-auto h-12 sm:h-10 bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
               Add GST Rate
             </Button>
@@ -202,6 +202,7 @@ export const GSTList: React.FC = () => {
                   value={percentage} 
                   onChange={e => setPercentage(e.target.value)} 
                   placeholder="e.g. 18"
+                  className="h-12 md:h-10"
                   required
                 />
               </div>
@@ -214,19 +215,20 @@ export const GSTList: React.FC = () => {
         </Dialog>
       </div>
 
-      <div className="flex items-center gap-2 max-w-sm">
+      <div className="flex items-center gap-2 max-w-sm w-full">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-3 top-3 h-5 w-5 sm:left-2.5 sm:top-2.5 sm:h-4 sm:w-4 text-slate-500" />
           <Input 
             placeholder="Search by percentage..." 
-            className="pl-9 bg-white" 
+            className="pl-10 sm:pl-9 bg-white h-12 sm:h-10" 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-md border border-slate-200 shadow-sm max-w-2xl">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-md border border-slate-200 shadow-sm max-w-2xl overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -264,6 +266,31 @@ export const GSTList: React.FC = () => {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Cards View */}
+      <div className="md:hidden space-y-4 max-w-2xl">
+        {loading ? (
+          <div className="text-center py-10 text-slate-500">Loading...</div>
+        ) : filteredRates.length === 0 ? (
+          <div className="text-center py-10 text-slate-500 bg-white rounded-xl border border-slate-200">No GST rates found.</div>
+        ) : (
+          filteredRates.map((rate) => (
+            <div key={rate.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                <div className="font-bold text-slate-900 text-lg">{rate.gst_percentage}%</div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="ghost" size="icon" onClick={() => openEdit(rate)} className="h-10 w-10 bg-slate-50 text-slate-600 hover:bg-slate-100">
+                  <Edit2 className="w-5 h-5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(rate.id)} className="h-10 w-10 bg-red-50 text-red-600 hover:bg-red-100">
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

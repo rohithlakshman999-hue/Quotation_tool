@@ -205,9 +205,9 @@ export const ProductList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Product Master</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Product Master</h2>
           <p className="text-slate-500">Manage your inventory items and services.</p>
         </div>
         
@@ -216,7 +216,7 @@ export const ProductList: React.FC = () => {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="w-full sm:w-auto h-12 sm:h-10 bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
               Add Product
             </Button>
@@ -229,13 +229,13 @@ export const ProductList: React.FC = () => {
             <form onSubmit={handleSave} className="space-y-4 pt-4">
               <div className="space-y-2">
                 <Label htmlFor="product_name">Product Name</Label>
-                <Input id="product_name" name="product_name" value={formData.product_name} onChange={handleInputChange} required />
+                <Input id="product_name" name="product_name" className="h-12 md:h-10" value={formData.product_name} onChange={handleInputChange} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="hsn">HSN Code</Label>
-                <Input id="hsn" name="hsn" value={formData.hsn} onChange={handleInputChange} required />
+                <Input id="hsn" name="hsn" className="h-12 md:h-10" value={formData.hsn} onChange={handleInputChange} required />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="unit_id">Unit of Measurement</Label>
                   <Select
@@ -244,6 +244,7 @@ export const ProductList: React.FC = () => {
                     onChange={(option) => setFormData({ ...formData, unit_id: option?.value || '' })}
                     placeholder="Search UOM..."
                     className="text-sm"
+                    styles={{ control: (base) => ({ ...base, minHeight: '48px', '@media (min-width: 768px)': { minHeight: '40px' } }) }}
                   />
                 </div>
                 <div className="space-y-2">
@@ -254,6 +255,7 @@ export const ProductList: React.FC = () => {
                     onChange={(option) => setFormData({ ...formData, gst_id: option?.value || '' })}
                     placeholder="Search GST..."
                     className="text-sm"
+                    styles={{ control: (base) => ({ ...base, minHeight: '48px', '@media (min-width: 768px)': { minHeight: '40px' } }) }}
                   />
                 </div>
               </div>
@@ -266,19 +268,20 @@ export const ProductList: React.FC = () => {
         </Dialog>
       </div>
 
-      <div className="flex items-center gap-2 max-w-sm">
+      <div className="flex items-center gap-2 max-w-sm w-full">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-3 top-3 h-5 w-5 sm:left-2.5 sm:top-2.5 sm:h-4 sm:w-4 text-slate-500" />
           <Input 
             placeholder="Search products..." 
-            className="pl-9 bg-white" 
+            className="pl-10 sm:pl-9 bg-white h-12 sm:h-10" 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-md border border-slate-200 shadow-sm">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-md border border-slate-200 shadow-sm overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -328,6 +331,50 @@ export const ProductList: React.FC = () => {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Cards View */}
+      <div className="md:hidden space-y-4">
+        {loading ? (
+          <div className="text-center py-10 text-slate-500">Loading...</div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-10 text-slate-500 bg-white rounded-xl border border-slate-200">No products found.</div>
+        ) : (
+          filteredProducts.map((product) => (
+            <div key={product.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+              <div className="flex justify-between items-start border-b border-slate-100 pb-2">
+                <div className="font-bold text-slate-900 text-lg">{product.product_name}</div>
+                <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-1 rounded">
+                  HSN: {product.hsn}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <div className="text-slate-500">UOM</div>
+                <div className="font-medium">
+                  {product.unit ? (
+                    <span className="bg-slate-100 px-2 py-1 rounded text-xs border border-slate-200">
+                      {product.unit.symbol}
+                    </span>
+                  ) : '-'}
+                </div>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <div className="text-slate-500">GST Rate</div>
+                <div className="font-medium">
+                  {product.gst_rate ? `${product.gst_rate.gst_percentage}%` : '-'}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <Button variant="ghost" size="icon" onClick={() => openEdit(product)} className="h-10 w-10 bg-slate-50 text-slate-600 hover:bg-slate-100">
+                  <Edit2 className="w-5 h-5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} className="h-10 w-10 bg-red-50 text-red-600 hover:bg-red-100">
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
