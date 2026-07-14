@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
 import { generateHTMLQuotationPDF } from '../../lib/htmlPdfGenerator';
 import Select from 'react-select';
+import { ConfirmDeleteDialog } from '../../components/ui/confirm-delete-dialog';
 
 interface LineItem {
   id: string;
@@ -57,6 +58,7 @@ export const QuotationForm: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -67,6 +69,7 @@ export const QuotationForm: React.FC = () => {
   const [clientId, setClientId] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
   const [terms, setTerms] = useState(defaultTerms);
+  const [status, setStatus] = useState<'pending' | 'won' | 'lost'>('pending');
 
   useEffect(() => {
     fetchLookups();
@@ -121,6 +124,7 @@ export const QuotationForm: React.FC = () => {
             setQuoteDate(quote.quote_date.split('T')[0]);
             setClientId(quote.client_id);
             setTerms(quote.terms_conditions || defaultTerms);
+            setStatus(quote.status || 'pending');
             
             if (quote.items) {
               const mappedItems = quote.items.map((i: any) => {
@@ -154,6 +158,7 @@ export const QuotationForm: React.FC = () => {
                 setQuoteDate(quote.quote_date);
                 setClientId(quote.client_id);
                 setTerms(quote.terms_conditions || defaultTerms);
+                setStatus(quote.status || 'pending');
 
                 const savedItems = localStorage.getItem(`demo_items_${id}`);
                 if (savedItems) {
@@ -220,8 +225,14 @@ export const QuotationForm: React.FC = () => {
     setItems(prev => [...prev, createEmptyItem()]);
   };
 
-  const removeItem = (idToRemove: string) => {
-    setItems(prev => prev.filter(item => item.id !== idToRemove));
+  const confirmRemoveItem = (idToRemove: string) => {
+    setDeleteItemId(idToRemove);
+  };
+
+  const performRemoveItem = async () => {
+    if (!deleteItemId) return;
+    setItems(prev => prev.filter(item => item.id !== deleteItemId));
+    setDeleteItemId(null);
   };
 
   const calculateLineItem = (item: LineItem): LineItem => {
@@ -336,6 +347,7 @@ export const QuotationForm: React.FC = () => {
           client_id: clientId,
           net_amount: netAmount,
           terms_conditions: terms,
+          status: status,
           created_at: new Date().toISOString(),
           client: selectedClient || null
         };
@@ -383,6 +395,7 @@ export const QuotationForm: React.FC = () => {
         client_id: clientId,
         net_amount: netAmount,
         terms_conditions: terms,
+        status: status,
         user_id: user_id
       };
 
@@ -470,6 +483,11 @@ export const QuotationForm: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-20">
+      <ConfirmDeleteDialog
+        isOpen={!!deleteItemId}
+        onClose={() => setDeleteItemId(null)}
+        onConfirm={performRemoveItem}
+      />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
@@ -646,7 +664,7 @@ export const QuotationForm: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell className="align-middle py-3 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length === 1}>
+                      <Button variant="ghost" size="icon" onClick={() => confirmRemoveItem(item.id)} disabled={items.length === 1}>
                         <Trash2 className="w-4 h-4 text-red-500" />
                       </Button>
                     </TableCell>
@@ -662,7 +680,7 @@ export const QuotationForm: React.FC = () => {
               <div key={item.id} className="border border-slate-200 rounded-xl p-4 space-y-4 shadow-sm bg-white">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span className="font-bold text-slate-700">Item {index + 1}</span>
-                  <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} disabled={items.length === 1} className="text-red-500 hover:bg-red-50 h-10 w-10">
+                  <Button variant="ghost" size="icon" onClick={() => confirmRemoveItem(item.id)} disabled={items.length === 1} className="text-red-500 hover:bg-red-50 h-10 w-10">
                     <Trash2 className="w-5 h-5" />
                   </Button>
                 </div>

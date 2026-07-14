@@ -21,6 +21,7 @@ import {
 import { Label } from '../../components/ui/label';
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '../../components/ui/confirm-delete-dialog';
 
 export const GSTList: React.FC = () => {
   const [rates, setRates] = useState<GSTRate[]>([]);
@@ -29,6 +30,7 @@ export const GSTList: React.FC = () => {
   
   const [isOpen, setIsOpen] = useState(false);
   const [editingRate, setEditingRate] = useState<GSTRate | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   
   // Form State
   const [percentage, setPercentage] = useState('');
@@ -134,25 +136,26 @@ export const GSTList: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this GST rate?')) return;
+  const confirmDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const performDelete = async () => {
+    if (!deleteId) return;
 
     if (!isSupabaseConfigured) {
-      const updated = rates.filter(r => r.id !== id);
+      const updated = rates.filter(r => r.id !== deleteId);
       setRates(updated);
       localStorage.setItem('demo_gst_rates', JSON.stringify(updated));
-      toast.success('GST Rate deleted successfully');
+      setDeleteId(null);
       return;
     }
     
-    try {
-      const { error } = await supabase.from('gst_rates').delete().eq('id', id);
-      if (error) throw error;
-      toast.success('GST Rate deleted successfully');
-      fetchRates();
-    } catch (error: any) {
-      toast.error('Error deleting GST rate', { description: error.message });
-    }
+    const { error } = await supabase.from('gst_rates').delete().eq('id', deleteId);
+    if (error) throw error;
+    
+    await fetchRates();
+    setDeleteId(null);
   };
 
   const openEdit = (rate: GSTRate) => {
@@ -172,6 +175,11 @@ export const GSTList: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <ConfirmDeleteDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={performDelete}
+      />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">GST Master</h2>
@@ -256,7 +264,7 @@ export const GSTList: React.FC = () => {
                       <Button variant="ghost" size="icon" onClick={() => openEdit(rate)}>
                         <Edit2 className="w-4 h-4 text-slate-500" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(rate.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => confirmDelete(rate.id)}>
                         <Trash2 className="w-4 h-4 text-red-500" />
                       </Button>
                     </div>
@@ -284,7 +292,7 @@ export const GSTList: React.FC = () => {
                 <Button variant="ghost" size="icon" onClick={() => openEdit(rate)} className="h-10 w-10 bg-slate-50 text-slate-600 hover:bg-slate-100">
                   <Edit2 className="w-5 h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(rate.id)} className="h-10 w-10 bg-red-50 text-red-600 hover:bg-red-100">
+                <Button variant="ghost" size="icon" onClick={() => confirmDelete(rate.id)} className="h-10 w-10 bg-red-50 text-red-600 hover:bg-red-100">
                   <Trash2 className="w-5 h-5" />
                 </Button>
               </div>

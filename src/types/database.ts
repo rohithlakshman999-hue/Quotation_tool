@@ -45,6 +45,7 @@ export interface Quotation {
   client_id: string;
   net_amount: number;
   terms_conditions: any;
+  status?: 'pending' | 'won' | 'lost';
   created_at: string;
   
   // Joins

@@ -21,6 +21,7 @@ import {
 import { Label } from '../../components/ui/label';
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '../../components/ui/confirm-delete-dialog';
 
 export const UnitList: React.FC = () => {
   const [units, setUnits] = useState<Unit[]>([]);
@@ -29,6 +30,7 @@ export const UnitList: React.FC = () => {
   
   const [isOpen, setIsOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   
   // Form State
   const [unitName, setUnitName] = useState('');
@@ -123,25 +125,26 @@ export const UnitList: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this unit?')) return;
+  const confirmDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const performDelete = async () => {
+    if (!deleteId) return;
 
     if (!isSupabaseConfigured) {
-      const updated = units.filter(u => u.id !== id);
+      const updated = units.filter(u => u.id !== deleteId);
       setUnits(updated);
       localStorage.setItem('demo_units', JSON.stringify(updated));
-      toast.success('Unit deleted successfully');
+      setDeleteId(null);
       return;
     }
     
-    try {
-      const { error } = await supabase.from('units').delete().eq('id', id);
-      if (error) throw error;
-      toast.success('Unit deleted successfully');
-      fetchUnits();
-    } catch (error: any) {
-      toast.error('Error deleting unit', { description: error.message });
-    }
+    const { error } = await supabase.from('units').delete().eq('id', deleteId);
+    if (error) throw error;
+    
+    await fetchUnits();
+    setDeleteId(null);
   };
 
   const openEdit = (unit: Unit) => {
@@ -164,6 +167,11 @@ export const UnitList: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <ConfirmDeleteDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={performDelete}
+      />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">UOM Master</h2>
@@ -261,7 +269,7 @@ export const UnitList: React.FC = () => {
                       <Button variant="ghost" size="icon" onClick={() => openEdit(unit)}>
                         <Edit2 className="w-4 h-4 text-slate-500" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(unit.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => confirmDelete(unit.id)}>
                         <Trash2 className="w-4 h-4 text-red-500" />
                       </Button>
                     </div>
@@ -292,7 +300,7 @@ export const UnitList: React.FC = () => {
                 <Button variant="ghost" size="icon" onClick={() => openEdit(unit)} className="h-10 w-10 bg-slate-50 text-slate-600 hover:bg-slate-100">
                   <Edit2 className="w-5 h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(unit.id)} className="h-10 w-10 bg-red-50 text-red-600 hover:bg-red-100">
+                <Button variant="ghost" size="icon" onClick={() => confirmDelete(unit.id)} className="h-10 w-10 bg-red-50 text-red-600 hover:bg-red-100">
                   <Trash2 className="w-5 h-5" />
                 </Button>
               </div>

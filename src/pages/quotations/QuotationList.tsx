@@ -17,11 +17,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { generateQuotationPDF } from '../../lib/pdfGenerator';
 import type { Product, GSTRate } from '../../types/database';
+import { ConfirmDeleteDialog } from '../../components/ui/confirm-delete-dialog';
 
 export const QuotationList: React.FC = () => {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'won' | 'lost'>('all');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,24 +61,44 @@ export const QuotationList: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this quotation?')) return;
+  const confirmDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const performDelete = async () => {
+    if (!deleteId) return;
 
     if (!isSupabaseConfigured) {
-      const updated = quotations.filter(q => q.id !== id);
+      const updated = quotations.filter(q => q.id !== deleteId);
       setQuotations(updated);
       localStorage.setItem('demo_quotations', JSON.stringify(updated));
-      toast.success('Quotation deleted successfully');
+      setDeleteId(null);
       return;
     }
     
+    const { error } = await supabase.from('quotations').delete().eq('id', deleteId);
+    if (error) throw error;
+    
+    await fetchQuotations();
+    setDeleteId(null);
+  };
+
+  const handleStatusChange = async (id: string, newStatus: 'pending' | 'won' | 'lost') => {
+    if (!isSupabaseConfigured) {
+      const updated = quotations.map(q => q.id === id ? { ...q, status: newStatus } : q);
+      setQuotations(updated);
+      localStorage.setItem('demo_quotations', JSON.stringify(updated));
+      toast.success(`Quotation marked as ${newStatus}`);
+      return;
+    }
+
     try {
-      const { error } = await supabase.from('quotations').delete().eq('id', id);
+      const { error } = await supabase.from('quotations').update({ status: newStatus }).eq('id', id);
       if (error) throw error;
-      toast.success('Quotation deleted successfully');
-      fetchQuotations();
+      setQuotations(prev => prev.map(q => q.id === id ? { ...q, status: newStatus } : q));
+      toast.success(`Quotation marked as ${newStatus}`);
     } catch (error: any) {
-      toast.error('Error deleting quotation', { description: error.message });
+      toast.error('Failed to update status', { description: error.message });
     }
   };
 
@@ -163,13 +186,23 @@ export const QuotationList: React.FC = () => {
     }
   };
 
-  const filteredQuotations = quotations.filter(q => 
-    q.quote_number.toLowerCase().includes(search.toLowerCase()) || 
-    (q.client?.client_name || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredQuotations = quotations.filter(q => {
+    const matchesSearch = q.quote_number.toLowerCase().includes(search.toLowerCase()) || 
+                          (q.client?.client_name || '').toLowerCase().includes(search.toLowerCase());
+    
+    const currentStatus = q.status || 'pending';
+    const matchesStatus = statusFilter === 'all' || currentStatus === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="space-y-6">
+      <ConfirmDeleteDialog
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={performDelete}
+      />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Quotations</h2>
@@ -182,15 +215,31 @@ export const QuotationList: React.FC = () => {
         </Button>
       </div>
 
-      <div className="flex items-center gap-2 max-w-sm w-full">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-5 w-5 sm:left-2.5 sm:top-2.5 sm:h-4 sm:w-4 text-slate-500" />
-          <Input 
-            placeholder="Search by quote number or client..." 
-            className="pl-10 sm:pl-9 bg-white h-12 sm:h-10" 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
+        <div className="flex items-center gap-2 max-w-sm w-full">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 h-5 w-5 sm:left-2.5 sm:top-2.5 sm:h-4 sm:w-4 text-slate-500" />
+            <Input 
+              placeholder="Search by quote number or client..." 
+              className="pl-10 sm:pl-9 bg-white h-12 sm:h-10" 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex bg-slate-100 p-1 rounded-lg w-full sm:w-auto overflow-x-auto">
+          {['all', 'pending', 'won', 'lost'].map(filter => (
+            <button
+              key={filter}
+              onClick={() => setStatusFilter(filter as any)}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md capitalize transition-colors flex-1 sm:flex-none whitespace-nowrap ${
+                statusFilter === filter ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -202,6 +251,7 @@ export const QuotationList: React.FC = () => {
               <TableHead>Quote No.</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Client</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Net Amount</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -228,6 +278,21 @@ export const QuotationList: React.FC = () => {
                   </TableCell>
                   <TableCell>{format(new Date(quote.quote_date), 'dd MMM, yyyy')}</TableCell>
                   <TableCell>{quote.client?.client_name || 'Unknown Client'}</TableCell>
+                  <TableCell>
+                    <select
+                      value={quote.status || 'pending'}
+                      onChange={(e) => handleStatusChange(quote.id, e.target.value as any)}
+                      className={`text-xs font-semibold rounded-full px-2.5 py-1 border outline-none cursor-pointer appearance-none ${
+                        quote.status === 'won' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        quote.status === 'lost' ? 'bg-red-50 text-red-700 border-red-200' :
+                        'bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="won">Won</option>
+                      <option value="lost">Lost</option>
+                    </select>
+                  </TableCell>
                   <TableCell className="text-right font-medium">
                     ₹{quote.net_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </TableCell>
@@ -242,7 +307,7 @@ export const QuotationList: React.FC = () => {
                       <Button variant="ghost" size="icon" title="Edit" onClick={() => navigate(`/quotations/${quote.id}/edit`)}>
                         <Edit2 className="w-4 h-4 text-slate-500" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(quote.id)} title="Delete">
+                      <Button variant="ghost" size="icon" onClick={() => confirmDelete(quote.id)} title="Delete">
                         <Trash2 className="w-4 h-4 text-red-500" />
                       </Button>
                     </div>
@@ -282,6 +347,22 @@ export const QuotationList: React.FC = () => {
                 <div className="text-sm text-slate-500">Net Amount</div>
                 <div className="font-bold text-lg text-slate-800">₹{quote.net_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
               </div>
+              <div className="flex justify-between items-center text-sm border-t border-slate-100 pt-2 mt-2">
+                <span className="text-slate-500">Status</span>
+                <select
+                  value={quote.status || 'pending'}
+                  onChange={(e) => handleStatusChange(quote.id, e.target.value as any)}
+                  className={`text-xs font-semibold rounded-full px-2.5 py-1 border outline-none cursor-pointer appearance-none ${
+                    quote.status === 'won' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                    quote.status === 'lost' ? 'bg-red-50 text-red-700 border-red-200' :
+                    'bg-slate-100 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="won">Won</option>
+                  <option value="lost">Lost</option>
+                </select>
+              </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                 <Button variant="ghost" size="icon" onClick={() => handleDownload(quote, 'preview')} title="Preview PDF" className="h-10 w-10 bg-blue-50 text-blue-600 hover:bg-blue-100">
                   <Eye className="w-5 h-5" />
@@ -292,7 +373,7 @@ export const QuotationList: React.FC = () => {
                 <Button variant="ghost" size="icon" title="Edit" onClick={() => navigate(`/quotations/${quote.id}/edit`)} className="h-10 w-10 bg-slate-50 text-slate-600 hover:bg-slate-100">
                   <Edit2 className="w-5 h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleDelete(quote.id)} title="Delete" className="h-10 w-10 bg-red-50 text-red-600 hover:bg-red-100">
+                <Button variant="ghost" size="icon" onClick={() => confirmDelete(quote.id)} title="Delete" className="h-10 w-10 bg-red-50 text-red-600 hover:bg-red-100">
                   <Trash2 className="w-5 h-5" />
                 </Button>
               </div>
