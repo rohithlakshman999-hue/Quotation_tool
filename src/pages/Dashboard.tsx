@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Users, Clock, CheckCircle, XCircle } from "lucide-react"
+import { Users, Clock, CheckCircle } from "lucide-react"
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import type { Quotation, Client } from '../types/database';
+import type { Quotation } from '../types/database';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 
