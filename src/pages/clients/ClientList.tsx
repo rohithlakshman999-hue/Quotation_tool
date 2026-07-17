@@ -181,9 +181,9 @@ export const ClientList: React.FC = () => {
   };
 
   const filteredClients = clients.filter(c => 
-    c.client_name.toLowerCase().includes(search.toLowerCase()) || 
-    c.gstin.toLowerCase().includes(search.toLowerCase()) ||
-    c.city.toLowerCase().includes(search.toLowerCase())
+    (c.client_name || '').toLowerCase().includes(search.toLowerCase()) || 
+    (c.gstin || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.city || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
