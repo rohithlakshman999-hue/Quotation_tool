@@ -695,18 +695,22 @@ export const QuotationForm: React.FC = () => {
             <Table className="w-full table-fixed min-w-[800px]">
               <TableHeader className="bg-slate-50/50">
                 <TableRow>
-                  <TableHead className="w-[25%]">Inventory Item</TableHead>
+                  <TableHead className="w-[5%] text-center">#</TableHead>
+                  <TableHead className="w-[23%]">Inventory Item</TableHead>
                   <TableHead className="w-[18%]">Description</TableHead>
-                  <TableHead className="w-[10%]">Qty</TableHead>
+                  <TableHead className="w-[9%]">Qty</TableHead>
                   <TableHead className="w-[12%] text-right">Rate (₹)</TableHead>
                   <TableHead className="w-[12%] text-right">Item Total</TableHead>
-                  <TableHead className="w-[12%] text-center">GST</TableHead>
-                  <TableHead className="w-[11%] text-right">Actions</TableHead>
+                  <TableHead className="w-[11%] text-center">GST</TableHead>
+                  <TableHead className="w-[10%] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <TableRow key={item.id}>
+                    <TableCell className="align-top py-4 text-center text-slate-500 font-medium text-sm">
+                      {index + 1}
+                    </TableCell>
                     <TableCell className="align-top py-3">
                       <Select
                         options={productOptions}
@@ -913,8 +917,8 @@ export const QuotationForm: React.FC = () => {
             ))}
           </div>
 
-          <div className="p-4 flex justify-end">
-            <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-8">
+          <div className="p-4 flex justify-start border-t border-slate-100">
+            <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-8 ml-8 sm:ml-12 text-slate-600 hover:text-slate-900 border-slate-300">
               <Plus className="w-4 h-4 mr-1" /> Add Item
             </Button>
           </div>
