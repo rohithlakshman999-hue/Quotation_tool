@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../components/ui/table';
-import { Plus, Edit2, Trash2, Search, FileText, Eye, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, FileText, Eye, X, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -29,11 +29,137 @@ export const QuotationList: React.FC = () => {
   const [expandedQuotationId, setExpandedQuotationId] = useState<string | null>(null);
   const [expandedItemsCache, setExpandedItemsCache] = useState<Record<string, any[]>>({});
   const [isExpanding, setIsExpanding] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchQuotations();
   }, []);
+
+  // ─── Generate next sequential quote number ────────────────────────────────
+  const generateNextQuoteNumber = async (): Promise<string> => {
+    const fallback = `HNBT/2627/${Date.now()}`;
+    try {
+      if (isSupabaseConfigured) {
+        const { data: lastQuote } = await supabase
+          .from('quotations')
+          .select('quote_number')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        if (lastQuote?.quote_number) {
+          const match = lastQuote.quote_number.match(/(HNBT\/\d{4}\/)([0-9]+)/);
+          if (match && match[1] && match[2]) {
+            const nextNum = parseInt(match[2], 10) + 1;
+            return `${match[1]}${nextNum.toString().padStart(3, '0')}`;
+          }
+        }
+      } else {
+        const saved = localStorage.getItem('demo_quotations');
+        if (saved) {
+          const qs = JSON.parse(saved);
+          const last = qs.find((q: any) => q.quote_number?.match(/HNBT\/\d{4}\/\d+/));
+          if (last) {
+            const match = last.quote_number.match(/(HNBT\/\d{4}\/)([0-9]+)/);
+            if (match && match[1] && match[2]) {
+              const nextNum = parseInt(match[2], 10) + 1;
+              return `${match[1]}${nextNum.toString().padStart(3, '0')}`;
+            }
+          }
+        }
+      }
+    } catch { /* ignore */ }
+    return fallback;
+  };
+
+  // ─── Duplicate a quotation ───────────────────────────────────────────────────
+  const handleDuplicate = async (quote: any) => {
+    if (duplicatingId) return;
+    setDuplicatingId(quote.id);
+    try {
+      const newQuoteNumber = await generateNextQuoteNumber();
+      const today = new Date().toISOString().split('T')[0];
+
+      if (!isSupabaseConfigured) {
+        // ── Demo / localStorage mode ──
+        const savedItems = localStorage.getItem(`demo_items_${quote.id}`);
+        const items = savedItems ? JSON.parse(savedItems) : [];
+        const newId = crypto.randomUUID();
+        const newQuote = {
+          ...quote,
+          id: newId,
+          quote_number: newQuoteNumber,
+          quote_date: today,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        };
+        const saved = localStorage.getItem('demo_quotations');
+        const qs: any[] = saved ? JSON.parse(saved) : [];
+        qs.unshift(newQuote);
+        localStorage.setItem('demo_quotations', JSON.stringify(qs));
+        const newItems = items.map((it: any) => ({ ...it, id: crypto.randomUUID() }));
+        localStorage.setItem(`demo_items_${newId}`, JSON.stringify(newItems));
+        await fetchQuotations();
+        setExpandedQuotationId(newId);
+        toast.success('Quotation duplicated successfully.', { description: `New Quote No: ${newQuoteNumber}` });
+        return;
+      }
+
+      // ── Supabase mode ──
+      const { data: userData } = await supabase.auth.getUser();
+      const user_id = userData.user?.id || '';
+
+      // 1. Fetch original items
+      const { data: originalItems, error: itemsErr } = await supabase
+        .from('quotation_items')
+        .select('*')
+        .eq('quotation_id', quote.id);
+      if (itemsErr) throw itemsErr;
+
+      // 2. Insert new quotation header
+      const { data: newQuote, error: qErr } = await supabase
+        .from('quotations')
+        .insert([{
+          quote_number: newQuoteNumber,
+          quote_date: today,
+          client_id: quote.client_id,
+          net_amount: quote.net_amount,
+          terms_conditions: quote.terms_conditions,
+          status: 'pending',
+          user_id
+        }])
+        .select()
+        .single();
+      if (qErr) throw qErr;
+
+      // 3. Insert copied items
+      if (originalItems && originalItems.length > 0) {
+        const itemsPayload = originalItems.map((it: any) => ({
+          quotation_id: newQuote.id,
+          product_id: it.product_id,
+          quantity: it.quantity,
+          unit_rate: it.unit_rate,
+          tax: it.tax,
+          total_amount: it.total_amount,
+          description: it.description
+        }));
+        const { error: iErr } = await supabase.from('quotation_items').insert(itemsPayload);
+        if (iErr) {
+          // Rollback: remove the just-created quotation header to avoid orphan
+          await supabase.from('quotations').delete().eq('id', newQuote.id);
+          throw iErr;
+        }
+      }
+
+      await fetchQuotations();
+      setExpandedQuotationId(newQuote.id);
+      toast.success('Quotation duplicated successfully.', { description: `New Quote No: ${newQuoteNumber}` });
+    } catch (err: any) {
+      toast.error('Unable to duplicate quotation.', { description: err.message || 'Please try again.' });
+    } finally {
+      setDuplicatingId(null);
+    }
+  };
 
   const toggleExpand = async (quoteId: string) => {
     if (expandedQuotationId === quoteId) {
@@ -397,6 +523,17 @@ export const QuotationList: React.FC = () => {
                       <Button variant="ghost" size="icon" onClick={() => handleDownload(quote, 'save')} title="Download PDF">
                         <FileText className="w-4 h-4 text-emerald-600" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Duplicate Quotation"
+                        onClick={() => handleDuplicate(quote)}
+                        disabled={duplicatingId === quote.id}
+                      >
+                        {duplicatingId === quote.id
+                          ? <div className="w-4 h-4 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+                          : <Copy className="w-4 h-4 text-violet-500" />}
+                      </Button>
                       <Button variant="ghost" size="icon" title="Edit" onClick={() => navigate(`/quotations/${quote.id}/edit`)}>
                         <Edit2 className="w-4 h-4 text-slate-500" />
                       </Button>
@@ -554,6 +691,18 @@ export const QuotationList: React.FC = () => {
                 <Button variant="ghost" size="icon" onClick={() => handleDownload(quote, 'save')} title="Download PDF" className="h-10 w-10 bg-emerald-50 text-emerald-600 hover:bg-emerald-100">
                   <FileText className="w-5 h-5" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Duplicate Quotation"
+                  onClick={() => handleDuplicate(quote)}
+                  disabled={duplicatingId === quote.id}
+                  className="h-10 w-10 bg-violet-50 text-violet-600 hover:bg-violet-100"
+                >
+                  {duplicatingId === quote.id
+                    ? <div className="w-5 h-5 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+                    : <Copy className="w-5 h-5" />}
+                </Button>
                 <Button variant="ghost" size="icon" title="Edit" onClick={() => navigate(`/quotations/${quote.id}/edit`)} className="h-10 w-10 bg-slate-50 text-slate-600 hover:bg-slate-100">
                   <Edit2 className="w-5 h-5" />
                 </Button>
@@ -622,6 +771,8 @@ export const QuotationList: React.FC = () => {
                       </div>
                     </div>
                   )}
+
+
                 </div>
               )}
             </div>
